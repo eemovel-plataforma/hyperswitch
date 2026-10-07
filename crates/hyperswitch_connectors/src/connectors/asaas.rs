@@ -747,13 +747,14 @@ static ASAAS_SUPPORTED_PAYMENT_METHODS: LazyLock<SupportedPaymentMethods> = Lazy
     methods.add(
         enums::PaymentMethod::Card,
         enums::PaymentMethodType::Credit,
-        card_features.clone(),
-    );
-    methods.add(
-        enums::PaymentMethod::Card,
-        enums::PaymentMethodType::Debit,
         card_features,
     );
+    // Asaas's API only accepts submitted card data (`creditCard`/`creditCardHolderInfo`)
+    // for the CREDIT_CARD billingType. Debit cards cannot be charged by sending card
+    // details through the API (per https://docs.asaas.com/docs/payments-via-credit-card) -
+    // the only way to accept debit is to redirect the payer to Asaas's hosted invoiceUrl.
+    // Do not add a Debit entry here or re-introduce a "DEBIT_CARD" billingType in
+    // transformers.rs without that hosted-flow integration.
     methods.add(
         enums::PaymentMethod::BankTransfer,
         enums::PaymentMethodType::Pix,

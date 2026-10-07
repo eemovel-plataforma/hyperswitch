@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use common_enums::enums;
 use common_utils::{request::Method, types::FloatMajorUnit};
+use error_stack::ResultExt;
 use hyperswitch_domain_models::{
     payment_method_data::{BankTransferData, Card, PaymentMethodData, VoucherData},
     router_data::{ConnectorAuthType, PaymentMethodToken, RouterData},
@@ -239,6 +240,11 @@ impl TryFrom<&AsaasRouterData<&PaymentsAuthorizeRouterData>> for AsaasPaymentReq
         )?;
         let due_date = boleto_due_date(&request.payment_method_data).unwrap_or_else(today);
         let (billing_type, card) = match request.payment_method_data.clone() {
+            // Asaas only accepts submitted card data under billingType "CREDIT_CARD".
+            // There is no "DEBIT_CARD" billingType for API-submitted card data; debit
+            // can only be collected via Asaas's hosted invoiceUrl flow. Do not branch
+            // this on PaymentMethodType::Debit (see asaas.rs's feature matrix, where
+            // Card/Debit is intentionally NotSupported for the same reason).
             PaymentMethodData::Card(card) => ("CREDIT_CARD", Some(card)),
             PaymentMethodData::MandatePayment => ("CREDIT_CARD", None),
             PaymentMethodData::BankTransfer(transfer) if is_pix(transfer.as_ref()) => ("PIX", None),
@@ -538,9 +544,14 @@ impl From<AsaasRefundStatus> for enums::RefundStatus {
 }
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AsaasRefundItem {
     id: String,
     status: AsaasRefundStatus,
+    #[serde(default)]
+    value: Option<f64>,
+    #[serde(default)]
+    date_created: Option<String>,
 }
 
 impl<F, T> TryFrom<ResponseRouterData<F, AsaasPaymentsResponse, T, PaymentsResponseData>>
@@ -628,10 +639,26 @@ pub struct AsaasRefundSync {
 }
 
 impl AsaasPaymentsResponse {
-    pub fn refund_state(&self, connector_refund_id: Option<&str>) -> AsaasRefundSync {
-        let refund = connector_refund_id
-            .and_then(|id| self.refunds.iter().find(|refund| refund.id == id))
-            .or_else(|| self.refunds.last());
+    pub fn refund_state(
+        &self,
+        connector_refund_id: Option<&str>,
+        expected_value: Option<f64>,
+    ) -> AsaasRefundSync {
+        let by_id = connector_refund_id
+            .and_then(|id| self.refunds.iter().find(|refund| refund.id == id));
+        let by_value = by_id.or_else(|| {
+            expected_value.and_then(|value| {
+                self.refunds
+                    .iter()
+                    .filter(|refund| {
+                        refund
+                            .value
+                            .is_some_and(|refund_value| (refund_value - value).abs() < 0.005)
+                    })
+                    .max_by(|a, b| a.date_created.cmp(&b.date_created))
+            })
+        });
+        let refund = by_value.or_else(|| self.refunds.last());
         if let Some(refund) = refund {
             return AsaasRefundSync {
                 connector_refund_id: refund.id.clone(),
@@ -656,7 +683,15 @@ impl TryFrom<RefundsResponseRouterData<Execute, AsaasPaymentsResponse>>
     fn try_from(
         item: RefundsResponseRouterData<Execute, AsaasPaymentsResponse>,
     ) -> Result<Self, Self::Error> {
-        let state = item.response.refund_state(None);
+        let expected_value = item
+            .data
+            .request
+            .minor_refund_amount
+            .to_major_unit_as_f64(item.data.request.currency)
+            .change_context(errors::ConnectorError::AmountConversionFailed)
+            .ok()
+            .map(|amount| amount.get_amount_as_f64());
+        let state = item.response.refund_state(None, expected_value);
         Ok(Self {
             response: Ok(RefundsResponseData {
                 connector_refund_id: state.connector_refund_id,
@@ -674,7 +709,7 @@ impl TryFrom<RefundsResponseRouterData<RSync, AsaasPaymentsResponse>> for Refund
     ) -> Result<Self, Self::Error> {
         let state = item
             .response
-            .refund_state(item.data.request.connector_refund_id.as_deref());
+            .refund_state(item.data.request.connector_refund_id.as_deref(), None);
         Ok(Self {
             response: Ok(RefundsResponseData {
                 connector_refund_id: state.connector_refund_id,

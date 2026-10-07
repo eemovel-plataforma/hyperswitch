@@ -8859,10 +8859,44 @@ payment_method_type = "DinersClub"
 [[givepayments.debit]]
 payment_method_type = "UnionPay"
 
+[[iugu.credit]]
+  payment_method_type = "Mastercard"
+[[iugu.credit]]
+  payment_method_type = "Visa"
+[[iugu.credit]]
+  payment_method_type = "AmericanExpress"
+[[iugu.credit]]
+  payment_method_type = "DinersClub"
+[[iugu.debit]]
+  payment_method_type = "Mastercard"
+[[iugu.debit]]
+  payment_method_type = "Visa"
+[[iugu.debit]]
+  payment_method_type = "AmericanExpress"
+[[iugu.debit]]
+  payment_method_type = "DinersClub"
+[[iugu.bank_transfer]]
+  payment_method_type = "pix"
+[[iugu.voucher]]
+  payment_method_type = "boleto"
+
 [iugu]
 [iugu.connector_auth.BodyKey]
 api_key = "API Key"
 key1 = "Account ID"
+
+[[asaas.credit]]
+  payment_method_type = "Mastercard"
+[[asaas.credit]]
+  payment_method_type = "Visa"
+[[asaas.credit]]
+  payment_method_type = "AmericanExpress"
+[[asaas.credit]]
+  payment_method_type = "DinersClub"
+[[asaas.bank_transfer]]
+  payment_method_type = "pix"
+[[asaas.voucher]]
+  payment_method_type = "boleto"
 
 [asaas]
 [asaas.connector_auth.HeaderKey]

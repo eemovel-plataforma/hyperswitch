@@ -736,7 +736,7 @@ static IUGU_SUPPORTED_PAYMENT_METHODS: LazyLock<SupportedPaymentMethods> = LazyL
         enums::CardNetwork::DinersClub,
     ];
     let card_features = PaymentMethodDetails {
-        mandates: enums::FeatureStatus::Supported,
+        mandates: enums::FeatureStatus::NotSupported,
         refunds: enums::FeatureStatus::Supported,
         supported_capture_methods: card_capture,
         specific_features: Some(
