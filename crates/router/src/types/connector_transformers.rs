@@ -15,6 +15,7 @@ impl ForeignTryFrom<api_enums::Connector> for euclid::enums::RoutableConnectors 
             api_enums::Connector::Airwallex => Self::Airwallex,
             api_enums::Connector::Amazonpay => Self::Amazonpay,
             api_enums::Connector::Archipel => Self::Archipel,
+            api_enums::Connector::Asaas => Self::Asaas,
             api_enums::Connector::Authipay => Self::Authipay,
             api_enums::Connector::Authorizedotnet => Self::Authorizedotnet,
             api_enums::Connector::Bambora => Self::Bambora,
@@ -94,6 +95,7 @@ impl ForeignTryFrom<api_enums::Connector> for euclid::enums::RoutableConnectors 
             api_enums::Connector::Inespay => Self::Inespay,
             api_enums::Connector::Interpayments => Self::Interpayments,
             api_enums::Connector::Itaubank => Self::Itaubank,
+            api_enums::Connector::Iugu => Self::Iugu,
             api_enums::Connector::Jpmorgan => Self::Jpmorgan,
             api_enums::Connector::Juspaythreedsserver => {
                 Err(common_utils::errors::ValidationError::InvalidValue {

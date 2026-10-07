@@ -2358,7 +2358,6 @@ default_imp_for_create_customer!(
     connectors::Affirm,
     connectors::Amazonpay,
     connectors::Archipel,
-    connectors::Asaas,
     connectors::Authipay,
     connectors::Bambora,
     connectors::Bamboraapac,

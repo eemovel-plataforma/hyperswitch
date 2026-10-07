@@ -703,6 +703,8 @@ impl ConnectorConfig {
             Connector::Payjustnowinstore => Ok(connector_data.payjustnowinstore),
             Connector::Imerchantsolutions => Ok(connector_data.imerchantsolutions),
             Connector::Givepayments => Ok(connector_data.givepayments),
+            Connector::Asaas => Ok(connector_data.asaas),
+            Connector::Iugu => Ok(connector_data.iugu),
         }
     }
 }

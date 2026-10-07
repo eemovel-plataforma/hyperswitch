@@ -8886,8 +8886,9 @@ payment_method_type = "DinersClub"
 payment_method_type = "UnionPay"
 
 [iugu]
-[iugu.connector_auth.HeaderKey]
+[iugu.connector_auth.BodyKey]
 api_key = "API Key"
+key1 = "Account ID"
 
 [asaas]
 [asaas.connector_auth.HeaderKey]

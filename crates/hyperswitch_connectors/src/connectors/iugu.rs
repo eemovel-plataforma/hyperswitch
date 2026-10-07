@@ -1,38 +1,38 @@
 pub mod transformers;
 
 use error_stack::{report, ResultExt};
-use hyperswitch_masking::{ExposeInterface, Mask};
+use hyperswitch_masking::{Mask, PeekInterface, Secret};
 
 use common_utils::{
     errors::CustomResult,
     ext_traits::BytesExt,
-    types::{AmountConvertor, StringMinorUnit, StringMinorUnitForConnector},
     request::{Method, Request, RequestBuilder, RequestContent},
+    types::{AmountConvertor, StringMinorUnit, StringMinorUnitForConnector},
 };
 
 use hyperswitch_domain_models::{
     router_data::{AccessToken, ConnectorAuthType, ErrorResponse, RouterData},
     router_flow_types::{
         access_token_auth::AccessTokenAuth,
-        payments::{
-            Authorize, Capture, PSync, PaymentMethodToken, Session,
-            SetupMandate, Void,
-        },
+        payments::{Authorize, Capture, PSync, PaymentMethodToken, Session, SetupMandate, Void},
         refunds::{Execute, RSync},
     },
     router_request_types::{
-        AccessTokenRequestData, PaymentMethodTokenizationData,
-        PaymentsAuthorizeData, PaymentsCancelData, PaymentsCaptureData, PaymentsSessionData,
-        PaymentsSyncData, RefundsData, SetupMandateRequestData,
+        AccessTokenRequestData, PaymentMethodTokenizationData, PaymentsAuthorizeData,
+        PaymentsCancelData, PaymentsCaptureData, PaymentsSessionData, PaymentsSyncData,
+        RefundsData, SetupMandateRequestData,
     },
     router_response_types::{PaymentsResponseData, RefundsResponseData},
     types::{
-        PaymentsAuthorizeRouterData,
-        PaymentsCaptureRouterData, PaymentsSyncRouterData, RefundSyncRouterData, RefundsRouterData,
+        PaymentsAuthorizeRouterData, PaymentsCaptureRouterData, PaymentsSyncRouterData,
+        RefundSyncRouterData, RefundsRouterData, TokenizationRouterData,
     },
 };
 use hyperswitch_interfaces::{
-    api::{self, ConnectorCommon, ConnectorCommonExt, ConnectorIntegration, ConnectorValidation, ConnectorSpecifications},
+    api::{
+        self, ConnectorCommon, ConnectorCommonExt, ConnectorIntegration, ConnectorSpecifications,
+        ConnectorValidation,
+    },
     configs::Connectors,
     errors,
     events::connector_api_logs::ConnectorEvent,
@@ -41,25 +41,23 @@ use hyperswitch_interfaces::{
 };
 use std::sync::LazyLock;
 
+use crate::{constants::headers, types::ResponseRouterData, utils};
 use common_enums::enums;
-use hyperswitch_domain_models::router_response_types::{ConnectorInfo, SupportedPaymentMethods};
-use crate::{
-    constants::headers,
-    types::ResponseRouterData,
-    utils,
+use hyperswitch_domain_models::router_response_types::{
+    ConnectorInfo, PaymentMethodDetails, SupportedPaymentMethods, SupportedPaymentMethodsExt,
 };
 
 use transformers as iugu;
 
 #[derive(Clone)]
 pub struct Iugu {
-    amount_converter: &'static (dyn AmountConvertor<Output = StringMinorUnit> + Sync)
+    amount_converter: &'static (dyn AmountConvertor<Output = StringMinorUnit> + Sync),
 }
 
 impl Iugu {
     pub fn new() -> &'static Self {
         &Self {
-            amount_converter: &StringMinorUnitForConnector
+            amount_converter: &StringMinorUnitForConnector,
         }
     }
 }
@@ -77,24 +75,98 @@ impl api::RefundExecute for Iugu {}
 impl api::RefundSync for Iugu {}
 impl api::PaymentToken for Iugu {}
 
-impl
-    ConnectorIntegration<
-        PaymentMethodToken,
-        PaymentMethodTokenizationData,
-        PaymentsResponseData,
-    > for Iugu
+impl ConnectorIntegration<PaymentMethodToken, PaymentMethodTokenizationData, PaymentsResponseData>
+    for Iugu
 {
-    // Not Implemented (R)
+    fn get_headers(
+        &self,
+        _req: &TokenizationRouterData,
+        _connectors: &Connectors,
+    ) -> CustomResult<Vec<(String, hyperswitch_masking::Maskable<String>)>, errors::ConnectorError>
+    {
+        Ok(vec![(
+            headers::CONTENT_TYPE.to_string(),
+            self.common_get_content_type().to_string().into(),
+        )])
+    }
+
+    fn get_content_type(&self) -> &'static str {
+        self.common_get_content_type()
+    }
+
+    fn get_url(
+        &self,
+        _req: &TokenizationRouterData,
+        connectors: &Connectors,
+    ) -> CustomResult<String, errors::ConnectorError> {
+        Ok(format!("{}/payment_token", self.base_url(connectors)))
+    }
+
+    fn get_request_body(
+        &self,
+        req: &TokenizationRouterData,
+        _connectors: &Connectors,
+    ) -> CustomResult<RequestContent, errors::ConnectorError> {
+        let connector_req = iugu::IuguTokenRequest::try_from(req)?;
+        Ok(RequestContent::Json(Box::new(connector_req)))
+    }
+
+    fn build_request(
+        &self,
+        req: &TokenizationRouterData,
+        connectors: &Connectors,
+    ) -> CustomResult<Option<Request>, errors::ConnectorError> {
+        Ok(Some(
+            RequestBuilder::new()
+                .method(Method::Post)
+                .url(&types::TokenizationType::get_url(self, req, connectors)?)
+                .attach_default_headers()
+                .headers(types::TokenizationType::get_headers(self, req, connectors)?)
+                .set_body(types::TokenizationType::get_request_body(
+                    self, req, connectors,
+                )?)
+                .build(),
+        ))
+    }
+
+    fn handle_response(
+        &self,
+        data: &TokenizationRouterData,
+        event_builder: Option<&mut ConnectorEvent>,
+        res: Response,
+    ) -> CustomResult<TokenizationRouterData, errors::ConnectorError> {
+        let response: iugu::IuguTokenResponse = res
+            .response
+            .parse_struct("IuguTokenResponse")
+            .change_context(errors::ConnectorError::ResponseDeserializationFailed)?;
+        event_builder.map(|i| i.set_response_body(&response));
+        router_env::logger::info!(connector_response=?response);
+        RouterData::try_from(ResponseRouterData {
+            response,
+            data: data.clone(),
+            http_code: res.status_code,
+        })
+    }
+
+    fn get_error_response(
+        &self,
+        res: Response,
+        event_builder: Option<&mut ConnectorEvent>,
+    ) -> CustomResult<ErrorResponse, errors::ConnectorError> {
+        self.build_error_response(res, event_builder)
+    }
 }
 
 impl<Flow, Request, Response> ConnectorCommonExt<Flow, Request, Response> for Iugu
 where
-    Self: ConnectorIntegration<Flow, Request, Response>,{
+    Self: ConnectorIntegration<Flow, Request, Response>,
+{
     fn build_headers(
         &self,
         req: &RouterData<Flow, Request, Response>,
         _connectors: &Connectors,
-    ) -> CustomResult<Vec<(String, hyperswitch_masking::Maskable<String>)>, errors::ConnectorError> {
+    ) -> CustomResult<Vec<(String, hyperswitch_masking::Maskable<String>)>, errors::ConnectorError>
+    {
         let mut header = vec![(
             headers::CONTENT_TYPE.to_string(),
             self.get_content_type().to_string().into(),
@@ -111,10 +183,7 @@ impl ConnectorCommon for Iugu {
     }
 
     fn get_currency_unit(&self) -> api::CurrencyUnit {
-        todo!()
-    //    TODO! Check connector documentation, on which unit they are processing the currency.
-    //    If the connector accepts amount in lower unit ( i.e cents for USD) then return api::CurrencyUnit::Minor,
-    //    if connector accepts amount in base unit (i.e dollars for USD) then return api::CurrencyUnit::Base
+        api::CurrencyUnit::Minor
     }
 
     fn common_get_content_type(&self) -> &'static str {
@@ -122,13 +191,25 @@ impl ConnectorCommon for Iugu {
     }
 
     fn base_url<'a>(&self, connectors: &'a Connectors) -> &'a str {
-        connectors.iugu.base_url.as_ref()
+        if connectors.iugu.base_url.is_empty() {
+            "https://api.iugu.com/v1"
+        } else {
+            connectors.iugu.base_url.as_str()
+        }
     }
 
-    fn get_auth_header(&self, auth_type:&ConnectorAuthType)-> CustomResult<Vec<(String,hyperswitch_masking::Maskable<String>)>,errors::ConnectorError> {
-        let auth =  iugu::IuguAuthType::try_from(auth_type)
+    fn get_auth_header(
+        &self,
+        auth_type: &ConnectorAuthType,
+    ) -> CustomResult<Vec<(String, hyperswitch_masking::Maskable<String>)>, errors::ConnectorError>
+    {
+        let auth = iugu::IuguAuthType::try_from(auth_type)
             .change_context(errors::ConnectorError::FailedToObtainAuthType)?;
-        Ok(vec![(headers::AUTHORIZATION.to_string(), auth.api_key.expose().into_masked())])
+        let header = Secret::new(iugu::basic_auth_header(auth.api_key.peek()));
+        Ok(vec![(
+            headers::AUTHORIZATION.to_string(),
+            header.into_masked(),
+        )])
     }
 
     fn build_error_response(
@@ -143,12 +224,13 @@ impl ConnectorCommon for Iugu {
 
         event_builder.map(|i| i.set_response_body(&response));
         router_env::logger::info!(connector_response=?response);
+        let parts = response.into_parts();
 
         Ok(ErrorResponse {
             status_code: res.status_code,
-            code: response.code,
-            message: response.message,
-            reason: response.reason,
+            code: parts.code,
+            message: parts.message,
+            reason: parts.reason,
             attempt_status: None,
             connector_transaction_id: None,
             connector_response_reference_id: None,
@@ -160,10 +242,7 @@ impl ConnectorCommon for Iugu {
     }
 }
 
-
-impl ConnectorValidation for Iugu
-{
-
+impl ConnectorValidation for Iugu {
     fn validate_psync_reference_id(
         &self,
         _data: &PaymentsSyncData,
@@ -175,38 +254,27 @@ impl ConnectorValidation for Iugu
     }
 }
 
-impl
-    ConnectorIntegration<
-        Session,
-        PaymentsSessionData,
-        PaymentsResponseData,
-    > for Iugu
-{
+impl ConnectorIntegration<Session, PaymentsSessionData, PaymentsResponseData> for Iugu {
     //TODO: implement sessions flow
 }
 
-impl ConnectorIntegration<AccessTokenAuth, AccessTokenRequestData, AccessToken>
-    for Iugu
-{
-}
+impl ConnectorIntegration<AccessTokenAuth, AccessTokenRequestData, AccessToken> for Iugu {}
 
-impl
-    ConnectorIntegration<
-        SetupMandate,
-        SetupMandateRequestData,
-        PaymentsResponseData,
-    > for Iugu
-{
-}
+impl ConnectorIntegration<SetupMandate, SetupMandateRequestData, PaymentsResponseData> for Iugu {}
 
-impl
-    ConnectorIntegration<
-        Authorize,
-        PaymentsAuthorizeData,
-        PaymentsResponseData,
-    > for Iugu {
-    fn get_headers(&self, req: &PaymentsAuthorizeRouterData, connectors: &Connectors,) -> CustomResult<Vec<(String, hyperswitch_masking::Maskable<String>)>,errors::ConnectorError> {
-        self.build_headers(req, connectors)
+impl ConnectorIntegration<Authorize, PaymentsAuthorizeData, PaymentsResponseData> for Iugu {
+    fn get_headers(
+        &self,
+        req: &PaymentsAuthorizeRouterData,
+        connectors: &Connectors,
+    ) -> CustomResult<Vec<(String, hyperswitch_masking::Maskable<String>)>, errors::ConnectorError>
+    {
+        let mut header = self.build_headers(req, connectors)?;
+        header.push((
+            headers::IDEMPOTENCY_KEY.to_string(),
+            req.connector_request_reference_id.clone().into(),
+        ));
+        Ok(header)
     }
 
     fn get_content_type(&self) -> &'static str {
@@ -215,25 +283,42 @@ impl
 
     fn get_url(
         &self,
-        _req: &PaymentsAuthorizeRouterData,
-        _connectors: &Connectors,) -> CustomResult<String,errors::ConnectorError> {
-        Err(errors::ConnectorError::NotImplemented("get_url method".to_string()).into())
-    }
-
-    fn get_request_body(&self, req: &PaymentsAuthorizeRouterData, _connectors: &Connectors,) -> CustomResult<RequestContent, errors::ConnectorError> {
+        req: &PaymentsAuthorizeRouterData,
+        connectors: &Connectors,
+    ) -> CustomResult<String, errors::ConnectorError> {
         let amount = utils::convert_amount(
             self.amount_converter,
             req.request.minor_amount,
             req.request.currency,
         )?;
+        let connector_router_data = iugu::IuguRouterData::from_minor(amount, req)?;
+        let connector_req = iugu::IuguAuthorizeRequest::try_from(&connector_router_data)?;
+        Ok(format!(
+            "{}/{}",
+            self.base_url(connectors),
+            connector_req.path()
+        ))
+    }
 
-        let connector_router_data =
-            iugu::IuguRouterData::from((
-                amount,
-                req,
-            ));
-        let connector_req = iugu::IuguPaymentsRequest::try_from(&connector_router_data)?;
-        Ok(RequestContent::Json(Box::new(connector_req)))
+    fn get_request_body(
+        &self,
+        req: &PaymentsAuthorizeRouterData,
+        _connectors: &Connectors,
+    ) -> CustomResult<RequestContent, errors::ConnectorError> {
+        let amount = utils::convert_amount(
+            self.amount_converter,
+            req.request.minor_amount,
+            req.request.currency,
+        )?;
+        let connector_router_data = iugu::IuguRouterData::from_minor(amount, req)?;
+        match iugu::IuguAuthorizeRequest::try_from(&connector_router_data)? {
+            iugu::IuguAuthorizeRequest::Charge(request) => {
+                Ok(RequestContent::Json(Box::new(request)))
+            }
+            iugu::IuguAuthorizeRequest::Invoice(request) => {
+                Ok(RequestContent::Json(Box::new(request)))
+            }
+        }
     }
 
     fn build_request(
@@ -251,7 +336,9 @@ impl
                 .headers(types::PaymentsAuthorizeType::get_headers(
                     self, req, connectors,
                 )?)
-                .set_body(types::PaymentsAuthorizeType::get_request_body(self, req, connectors)?)
+                .set_body(types::PaymentsAuthorizeType::get_request_body(
+                    self, req, connectors,
+                )?)
                 .build(),
         ))
     }
@@ -261,8 +348,11 @@ impl
         data: &PaymentsAuthorizeRouterData,
         event_builder: Option<&mut ConnectorEvent>,
         res: Response,
-    ) -> CustomResult<PaymentsAuthorizeRouterData,errors::ConnectorError> {
-        let response: iugu::IuguPaymentsResponse = res.response.parse_struct("Iugu PaymentsAuthorizeResponse").change_context(errors::ConnectorError::ResponseDeserializationFailed)?;
+    ) -> CustomResult<PaymentsAuthorizeRouterData, errors::ConnectorError> {
+        let response: iugu::IuguPaymentsResponse = res
+            .response
+            .parse_struct("Iugu PaymentsAuthorizeResponse")
+            .change_context(errors::ConnectorError::ResponseDeserializationFailed)?;
         event_builder.map(|i| i.set_response_body(&response));
         router_env::logger::info!(connector_response=?response);
         RouterData::try_from(ResponseRouterData {
@@ -272,20 +362,22 @@ impl
         })
     }
 
-    fn get_error_response(&self, res: Response, event_builder: Option<&mut ConnectorEvent>) -> CustomResult<ErrorResponse,errors::ConnectorError> {
+    fn get_error_response(
+        &self,
+        res: Response,
+        event_builder: Option<&mut ConnectorEvent>,
+    ) -> CustomResult<ErrorResponse, errors::ConnectorError> {
         self.build_error_response(res, event_builder)
     }
 }
 
-impl
-    ConnectorIntegration<PSync, PaymentsSyncData, PaymentsResponseData>
-    for Iugu
-{
+impl ConnectorIntegration<PSync, PaymentsSyncData, PaymentsResponseData> for Iugu {
     fn get_headers(
         &self,
         req: &PaymentsSyncRouterData,
         connectors: &Connectors,
-    ) -> CustomResult<Vec<(String, hyperswitch_masking::Maskable<String>)>, errors::ConnectorError> {
+    ) -> CustomResult<Vec<(String, hyperswitch_masking::Maskable<String>)>, errors::ConnectorError>
+    {
         self.build_headers(req, connectors)
     }
 
@@ -295,10 +387,18 @@ impl
 
     fn get_url(
         &self,
-        _req: &PaymentsSyncRouterData,
-        _connectors: &Connectors,
+        req: &PaymentsSyncRouterData,
+        connectors: &Connectors,
     ) -> CustomResult<String, errors::ConnectorError> {
-        Err(errors::ConnectorError::NotImplemented("get_url method".to_string()).into())
+        let transaction_id = req
+            .request
+            .connector_transaction_id
+            .get_connector_transaction_id()
+            .change_context(errors::ConnectorError::MissingConnectorTransactionID)?;
+        Ok(format!(
+            "{}/invoices/{transaction_id}",
+            self.base_url(connectors)
+        ))
     }
 
     fn build_request(
@@ -322,7 +422,7 @@ impl
         event_builder: Option<&mut ConnectorEvent>,
         res: Response,
     ) -> CustomResult<PaymentsSyncRouterData, errors::ConnectorError> {
-        let response: iugu:: IuguPaymentsResponse = res
+        let response: iugu::IuguPaymentsResponse = res
             .response
             .parse_struct("iugu PaymentsSyncResponse")
             .change_context(errors::ConnectorError::ResponseDeserializationFailed)?;
@@ -338,24 +438,19 @@ impl
     fn get_error_response(
         &self,
         res: Response,
-        event_builder: Option<&mut ConnectorEvent>
+        event_builder: Option<&mut ConnectorEvent>,
     ) -> CustomResult<ErrorResponse, errors::ConnectorError> {
         self.build_error_response(res, event_builder)
     }
 }
 
-impl
-    ConnectorIntegration<
-        Capture,
-        PaymentsCaptureData,
-        PaymentsResponseData,
-    > for Iugu
-{
+impl ConnectorIntegration<Capture, PaymentsCaptureData, PaymentsResponseData> for Iugu {
     fn get_headers(
         &self,
         req: &PaymentsCaptureRouterData,
         connectors: &Connectors,
-    ) -> CustomResult<Vec<(String, hyperswitch_masking::Maskable<String>)>, errors::ConnectorError> {
+    ) -> CustomResult<Vec<(String, hyperswitch_masking::Maskable<String>)>, errors::ConnectorError>
+    {
         self.build_headers(req, connectors)
     }
 
@@ -365,10 +460,14 @@ impl
 
     fn get_url(
         &self,
-        _req: &PaymentsCaptureRouterData,
-        _connectors: &Connectors,
+        req: &PaymentsCaptureRouterData,
+        connectors: &Connectors,
     ) -> CustomResult<String, errors::ConnectorError> {
-        Err(errors::ConnectorError::NotImplemented("get_url method".to_string()).into())
+        let transaction_id = req.request.connector_transaction_id.clone();
+        Ok(format!(
+            "{}/invoices/{transaction_id}/capture",
+            self.base_url(connectors)
+        ))
     }
 
     fn get_request_body(
@@ -376,7 +475,7 @@ impl
         _req: &PaymentsCaptureRouterData,
         _connectors: &Connectors,
     ) -> CustomResult<RequestContent, errors::ConnectorError> {
-        Err(errors::ConnectorError::NotImplemented("get_request_body method".to_string()).into())
+        Ok(RequestContent::Json(Box::new(serde_json::json!({}))))
     }
 
     fn build_request(
@@ -392,7 +491,9 @@ impl
                 .headers(types::PaymentsCaptureType::get_headers(
                     self, req, connectors,
                 )?)
-                .set_body(types::PaymentsCaptureType::get_request_body(self, req, connectors)?)
+                .set_body(types::PaymentsCaptureType::get_request_body(
+                    self, req, connectors,
+                )?)
                 .build(),
         ))
     }
@@ -419,28 +520,31 @@ impl
     fn get_error_response(
         &self,
         res: Response,
-        event_builder: Option<&mut ConnectorEvent>
+        event_builder: Option<&mut ConnectorEvent>,
     ) -> CustomResult<ErrorResponse, errors::ConnectorError> {
         self.build_error_response(res, event_builder)
     }
 }
 
-impl
-    ConnectorIntegration<
-        Void,
-        PaymentsCancelData,
-        PaymentsResponseData,
-    > for Iugu
-{}
+impl ConnectorIntegration<Void, PaymentsCancelData, PaymentsResponseData> for Iugu {}
 
-impl
-    ConnectorIntegration<
-        Execute,
-        RefundsData,
-        RefundsResponseData,
-    > for Iugu {
-    fn get_headers(&self, req: &RefundsRouterData<Execute>, connectors: &Connectors,) -> CustomResult<Vec<(String,hyperswitch_masking::Maskable<String>)>,errors::ConnectorError> {
-        self.build_headers(req, connectors)
+impl ConnectorIntegration<Execute, RefundsData, RefundsResponseData> for Iugu {
+    fn get_headers(
+        &self,
+        req: &RefundsRouterData<Execute>,
+        connectors: &Connectors,
+    ) -> CustomResult<Vec<(String, hyperswitch_masking::Maskable<String>)>, errors::ConnectorError>
+    {
+        let mut header = self.build_headers(req, connectors)?;
+        header.push((
+            headers::IDEMPOTENCY_KEY.to_string(),
+            format!(
+                "{}:{}",
+                req.connector_request_reference_id, req.request.refund_id
+            )
+            .into(),
+        ));
+        Ok(header)
     }
 
     fn get_content_type(&self) -> &'static str {
@@ -449,34 +553,47 @@ impl
 
     fn get_url(
         &self,
-        _req: &RefundsRouterData<Execute>,
-        _connectors: &Connectors,) -> CustomResult<String,errors::ConnectorError> {
-        Err(errors::ConnectorError::NotImplemented("get_url method".to_string()).into())
+        req: &RefundsRouterData<Execute>,
+        connectors: &Connectors,
+    ) -> CustomResult<String, errors::ConnectorError> {
+        Ok(format!(
+            "{}/invoices/{}/refund",
+            self.base_url(connectors),
+            req.request.connector_transaction_id
+        ))
     }
 
-    fn get_request_body(&self, req: &RefundsRouterData<Execute>, _connectors: &Connectors,) -> CustomResult<RequestContent, errors::ConnectorError> {
+    fn get_request_body(
+        &self,
+        req: &RefundsRouterData<Execute>,
+        _connectors: &Connectors,
+    ) -> CustomResult<RequestContent, errors::ConnectorError> {
         let refund_amount = utils::convert_amount(
             self.amount_converter,
             req.request.minor_refund_amount,
             req.request.currency,
         )?;
 
-        let connector_router_data =
-            iugu::IuguRouterData::from((
-                refund_amount,
-                req,
-            ));
+        let connector_router_data = iugu::IuguRouterData::from_minor(refund_amount, req)?;
         let connector_req = iugu::IuguRefundRequest::try_from(&connector_router_data)?;
         Ok(RequestContent::Json(Box::new(connector_req)))
     }
 
-    fn build_request(&self, req: &RefundsRouterData<Execute>, connectors: &Connectors,) -> CustomResult<Option<Request>,errors::ConnectorError> {
+    fn build_request(
+        &self,
+        req: &RefundsRouterData<Execute>,
+        connectors: &Connectors,
+    ) -> CustomResult<Option<Request>, errors::ConnectorError> {
         let request = RequestBuilder::new()
             .method(Method::Post)
             .url(&types::RefundExecuteType::get_url(self, req, connectors)?)
             .attach_default_headers()
-            .headers(types::RefundExecuteType::get_headers(self, req, connectors)?)
-            .set_body(types::RefundExecuteType::get_request_body(self, req, connectors)?)
+            .headers(types::RefundExecuteType::get_headers(
+                self, req, connectors,
+            )?)
+            .set_body(types::RefundExecuteType::get_request_body(
+                self, req, connectors,
+            )?)
             .build();
         Ok(Some(request))
     }
@@ -486,8 +603,11 @@ impl
         data: &RefundsRouterData<Execute>,
         event_builder: Option<&mut ConnectorEvent>,
         res: Response,
-    ) -> CustomResult<RefundsRouterData<Execute>,errors::ConnectorError> {
-        let response: iugu::RefundResponse = res.response.parse_struct("iugu RefundResponse").change_context(errors::ConnectorError::ResponseDeserializationFailed)?;
+    ) -> CustomResult<RefundsRouterData<Execute>, errors::ConnectorError> {
+        let response: iugu::RefundResponse = res
+            .response
+            .parse_struct("iugu RefundResponse")
+            .change_context(errors::ConnectorError::ResponseDeserializationFailed)?;
         event_builder.map(|i| i.set_response_body(&response));
         router_env::logger::info!(connector_response=?response);
         RouterData::try_from(ResponseRouterData {
@@ -497,14 +617,22 @@ impl
         })
     }
 
-    fn get_error_response(&self, res: Response, event_builder: Option<&mut ConnectorEvent>) -> CustomResult<ErrorResponse,errors::ConnectorError> {
+    fn get_error_response(
+        &self,
+        res: Response,
+        event_builder: Option<&mut ConnectorEvent>,
+    ) -> CustomResult<ErrorResponse, errors::ConnectorError> {
         self.build_error_response(res, event_builder)
     }
 }
 
-impl
-    ConnectorIntegration<RSync, RefundsData, RefundsResponseData> for Iugu {
-    fn get_headers(&self, req: &RefundSyncRouterData,connectors: &Connectors,) -> CustomResult<Vec<(String, hyperswitch_masking::Maskable<String>)>,errors::ConnectorError> {
+impl ConnectorIntegration<RSync, RefundsData, RefundsResponseData> for Iugu {
+    fn get_headers(
+        &self,
+        req: &RefundSyncRouterData,
+        connectors: &Connectors,
+    ) -> CustomResult<Vec<(String, hyperswitch_masking::Maskable<String>)>, errors::ConnectorError>
+    {
         self.build_headers(req, connectors)
     }
 
@@ -514,8 +642,14 @@ impl
 
     fn get_url(
         &self,
-        _req: &RefundSyncRouterData,_connectors: &Connectors,) -> CustomResult<String,errors::ConnectorError> {
-        Err(errors::ConnectorError::NotImplemented("get_url method".to_string()).into())
+        req: &RefundSyncRouterData,
+        _connectors: &Connectors,
+    ) -> CustomResult<String, errors::ConnectorError> {
+        Ok(format!(
+            "{}/invoices/{}",
+            self.base_url(_connectors),
+            req.request.connector_transaction_id
+        ))
     }
 
     fn build_request(
@@ -529,7 +663,6 @@ impl
                 .url(&types::RefundSyncType::get_url(self, req, connectors)?)
                 .attach_default_headers()
                 .headers(types::RefundSyncType::get_headers(self, req, connectors)?)
-                .set_body(types::RefundSyncType::get_request_body(self, req, connectors)?)
                 .build(),
         ))
     }
@@ -539,8 +672,11 @@ impl
         data: &RefundSyncRouterData,
         event_builder: Option<&mut ConnectorEvent>,
         res: Response,
-    ) -> CustomResult<RefundSyncRouterData,errors::ConnectorError,> {
-        let response: iugu::RefundResponse = res.response.parse_struct("iugu RefundSyncResponse").change_context(errors::ConnectorError::ResponseDeserializationFailed)?;
+    ) -> CustomResult<RefundSyncRouterData, errors::ConnectorError> {
+        let response: iugu::RefundResponse =
+            res.response
+                .parse_struct("iugu RefundSyncResponse")
+                .change_context(errors::ConnectorError::ResponseDeserializationFailed)?;
         event_builder.map(|i| i.set_response_body(&response));
         router_env::logger::info!(connector_response=?response);
         RouterData::try_from(ResponseRouterData {
@@ -550,7 +686,11 @@ impl
         })
     }
 
-    fn get_error_response(&self, res: Response, event_builder: Option<&mut ConnectorEvent>) -> CustomResult<ErrorResponse,errors::ConnectorError> {
+    fn get_error_response(
+        &self,
+        res: Response,
+        event_builder: Option<&mut ConnectorEvent>,
+    ) -> CustomResult<ErrorResponse, errors::ConnectorError> {
         self.build_error_response(res, event_builder)
     }
 }
@@ -575,13 +715,72 @@ impl webhooks::IncomingWebhook for Iugu {
     fn get_webhook_resource_object(
         &self,
         _request: &webhooks::IncomingWebhookRequestDetails<'_>,
-    ) -> CustomResult<Box<dyn hyperswitch_masking::ErasedMaskSerialize>, errors::ConnectorError> {
+    ) -> CustomResult<Box<dyn hyperswitch_masking::ErasedMaskSerialize>, errors::ConnectorError>
+    {
         Err(report!(errors::ConnectorError::WebhooksNotImplemented))
     }
 }
 
-static IUGU_SUPPORTED_PAYMENT_METHODS: LazyLock<SupportedPaymentMethods> =
-    LazyLock::new(SupportedPaymentMethods::new);
+static IUGU_SUPPORTED_PAYMENT_METHODS: LazyLock<SupportedPaymentMethods> = LazyLock::new(|| {
+    let mut methods = SupportedPaymentMethods::new();
+    let card_capture = vec![
+        enums::CaptureMethod::Automatic,
+        enums::CaptureMethod::SequentialAutomatic,
+        enums::CaptureMethod::Manual,
+    ];
+    let async_capture = vec![enums::CaptureMethod::Automatic];
+    let card_networks = vec![
+        enums::CardNetwork::Visa,
+        enums::CardNetwork::Mastercard,
+        enums::CardNetwork::AmericanExpress,
+        enums::CardNetwork::DinersClub,
+    ];
+    let card_features = PaymentMethodDetails {
+        mandates: enums::FeatureStatus::Supported,
+        refunds: enums::FeatureStatus::Supported,
+        supported_capture_methods: card_capture,
+        specific_features: Some(
+            api_models::feature_matrix::PaymentMethodSpecificFeatures::Card(
+                api_models::feature_matrix::CardSpecificFeatures {
+                    three_ds: enums::FeatureStatus::NotSupported,
+                    no_three_ds: enums::FeatureStatus::Supported,
+                    supported_card_networks: card_networks,
+                },
+            ),
+        ),
+    };
+    methods.add(
+        enums::PaymentMethod::Card,
+        enums::PaymentMethodType::Credit,
+        card_features.clone(),
+    );
+    methods.add(
+        enums::PaymentMethod::Card,
+        enums::PaymentMethodType::Debit,
+        card_features,
+    );
+    methods.add(
+        enums::PaymentMethod::BankTransfer,
+        enums::PaymentMethodType::Pix,
+        PaymentMethodDetails {
+            mandates: enums::FeatureStatus::NotSupported,
+            refunds: enums::FeatureStatus::Supported,
+            supported_capture_methods: async_capture.clone(),
+            specific_features: None,
+        },
+    );
+    methods.add(
+        enums::PaymentMethod::Voucher,
+        enums::PaymentMethodType::Boleto,
+        PaymentMethodDetails {
+            mandates: enums::FeatureStatus::NotSupported,
+            refunds: enums::FeatureStatus::NotSupported,
+            supported_capture_methods: async_capture,
+            specific_features: None,
+        },
+    );
+    methods
+});
 
 static IUGU_CONNECTOR_INFO: ConnectorInfo = ConnectorInfo {
     display_name: "Iugu",

@@ -580,6 +580,18 @@ sofort = { country = "AT,BE,DE,ES,IT,NL", currency = "EUR" }
 [pm_filters.itaubank]
 pix = { country = "BR", currency = "BRL" }
 
+[pm_filters.iugu]
+credit = { country = "BR", currency = "BRL" }
+debit = { country = "BR", currency = "BRL" }
+pix = { country = "BR", currency = "BRL" }
+boleto = { country = "BR", currency = "BRL" }
+
+[pm_filters.asaas]
+credit = { country = "BR", currency = "BRL" }
+debit = { country = "BR", currency = "BRL" }
+pix = { country = "BR", currency = "BRL" }
+boleto = { country = "BR", currency = "BRL" }
+
 [pm_filters.nexinets]
 credit = { country = "DE",currency = "EUR" }
 debit = { country = "DE",currency = "EUR" }

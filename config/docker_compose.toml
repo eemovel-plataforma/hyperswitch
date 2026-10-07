@@ -519,6 +519,7 @@ hipay = { long_lived_token = false, payment_method = "card" }
 braintree = { long_lived_token = false, payment_method = "card,wallet" }
 gocardless = { long_lived_token = true, payment_method = "bank_debit" }
 billwerk = { long_lived_token = false, payment_method = "card" }
+iugu = { long_lived_token = false, payment_method = "card" }
 globalpay = { long_lived_token = false, payment_method = "card", flow = "mandates" }
 dwolla = { long_lived_token = true, payment_method = "bank_debit" }
 finix= { long_lived_token = false, payment_method = "card,wallet" }
@@ -827,6 +828,18 @@ we_chat_pay = { country = "GB",currency = "GBP,CNY" }
 
 [pm_filters.itaubank]
 pix = { country = "BR", currency = "BRL" }
+
+[pm_filters.iugu]
+credit = { country = "BR", currency = "BRL" }
+debit = { country = "BR", currency = "BRL" }
+pix = { country = "BR", currency = "BRL" }
+boleto = { country = "BR", currency = "BRL" }
+
+[pm_filters.asaas]
+credit = { country = "BR", currency = "BRL" }
+debit = { country = "BR", currency = "BRL" }
+pix = { country = "BR", currency = "BRL" }
+boleto = { country = "BR", currency = "BRL" }
 
 [pm_filters.nexinets]
 credit = { country = "DE",currency = "EUR" }
