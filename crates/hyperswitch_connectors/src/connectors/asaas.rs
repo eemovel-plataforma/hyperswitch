@@ -49,14 +49,14 @@ use crate::{
     utils,
 };
 
-use transformers as {{project-name | downcase}};
+use transformers as asaas;
 
 #[derive(Clone)]
-pub struct {{project-name | downcase | pascal_case}} {
+pub struct Asaas {
     amount_converter: &'static (dyn AmountConvertor<Output = StringMinorUnit> + Sync)
 }
 
-impl {{project-name | downcase | pascal_case}} {
+impl Asaas {
     pub fn new() -> &'static Self {
         &Self {
             amount_converter: &StringMinorUnitForConnector
@@ -64,30 +64,30 @@ impl {{project-name | downcase | pascal_case}} {
     }
 }
 
-impl api::Payment for {{project-name | downcase | pascal_case}} {}
-impl api::PaymentSession for {{project-name | downcase | pascal_case}} {}
-impl api::ConnectorAccessToken for {{project-name | downcase | pascal_case}} {}
-impl api::MandateSetup for {{project-name | downcase | pascal_case}} {}
-impl api::PaymentAuthorize for {{project-name | downcase | pascal_case}} {}
-impl api::PaymentSync for {{project-name | downcase | pascal_case}} {}
-impl api::PaymentCapture for {{project-name | downcase | pascal_case}} {}
-impl api::PaymentVoid for {{project-name | downcase | pascal_case}} {}
-impl api::Refund for {{project-name | downcase | pascal_case}} {}
-impl api::RefundExecute for {{project-name | downcase | pascal_case}} {}
-impl api::RefundSync for {{project-name | downcase | pascal_case}} {}
-impl api::PaymentToken for {{project-name | downcase | pascal_case}} {}
+impl api::Payment for Asaas {}
+impl api::PaymentSession for Asaas {}
+impl api::ConnectorAccessToken for Asaas {}
+impl api::MandateSetup for Asaas {}
+impl api::PaymentAuthorize for Asaas {}
+impl api::PaymentSync for Asaas {}
+impl api::PaymentCapture for Asaas {}
+impl api::PaymentVoid for Asaas {}
+impl api::Refund for Asaas {}
+impl api::RefundExecute for Asaas {}
+impl api::RefundSync for Asaas {}
+impl api::PaymentToken for Asaas {}
 
 impl
     ConnectorIntegration<
         PaymentMethodToken,
         PaymentMethodTokenizationData,
         PaymentsResponseData,
-    > for {{project-name | downcase | pascal_case}}
+    > for Asaas
 {
     // Not Implemented (R)
 }
 
-impl<Flow, Request, Response> ConnectorCommonExt<Flow, Request, Response> for {{project-name | downcase | pascal_case}}
+impl<Flow, Request, Response> ConnectorCommonExt<Flow, Request, Response> for Asaas
 where
     Self: ConnectorIntegration<Flow, Request, Response>,{
     fn build_headers(
@@ -105,9 +105,9 @@ where
     }
 }
 
-impl ConnectorCommon for {{project-name | downcase | pascal_case}} {
+impl ConnectorCommon for Asaas {
     fn id(&self) -> &'static str {
-        "{{project-name | downcase}}"
+        "asaas"
     }
 
     fn get_currency_unit(&self) -> api::CurrencyUnit {
@@ -122,11 +122,11 @@ impl ConnectorCommon for {{project-name | downcase | pascal_case}} {
     }
 
     fn base_url<'a>(&self, connectors: &'a Connectors) -> &'a str {
-        connectors.{{project-name}}.base_url.as_ref()
+        connectors.asaas.base_url.as_ref()
     }
 
     fn get_auth_header(&self, auth_type:&ConnectorAuthType)-> CustomResult<Vec<(String,hyperswitch_masking::Maskable<String>)>,errors::ConnectorError> {
-        let auth =  {{project-name | downcase}}::{{project-name | downcase | pascal_case}}AuthType::try_from(auth_type)
+        let auth =  asaas::AsaasAuthType::try_from(auth_type)
             .change_context(errors::ConnectorError::FailedToObtainAuthType)?;
         Ok(vec![(headers::AUTHORIZATION.to_string(), auth.api_key.expose().into_masked())])
     }
@@ -136,9 +136,9 @@ impl ConnectorCommon for {{project-name | downcase | pascal_case}} {
         res: Response,
         event_builder: Option<&mut ConnectorEvent>,
     ) -> CustomResult<ErrorResponse, errors::ConnectorError> {
-        let response: {{project-name | downcase}}::{{project-name | downcase | pascal_case}}ErrorResponse = res
+        let response: asaas::AsaasErrorResponse = res
             .response
-            .parse_struct("{{project-name | downcase | pascal_case}}ErrorResponse")
+            .parse_struct("AsaasErrorResponse")
             .change_context(errors::ConnectorError::ResponseDeserializationFailed)?;
 
         event_builder.map(|i| i.set_response_body(&response));
@@ -161,7 +161,7 @@ impl ConnectorCommon for {{project-name | downcase | pascal_case}} {
 }
 
 
-impl ConnectorValidation for {{project-name | downcase | pascal_case}}
+impl ConnectorValidation for Asaas
 {
 
     fn validate_psync_reference_id(
@@ -180,13 +180,13 @@ impl
         Session,
         PaymentsSessionData,
         PaymentsResponseData,
-    > for {{project-name | downcase | pascal_case}}
+    > for Asaas
 {
     //TODO: implement sessions flow
 }
 
 impl ConnectorIntegration<AccessTokenAuth, AccessTokenRequestData, AccessToken>
-    for {{project-name | downcase | pascal_case}}
+    for Asaas
 {
 }
 
@@ -195,7 +195,7 @@ impl
         SetupMandate,
         SetupMandateRequestData,
         PaymentsResponseData,
-    > for {{project-name | downcase | pascal_case}}
+    > for Asaas
 {
 }
 
@@ -204,7 +204,7 @@ impl
         Authorize,
         PaymentsAuthorizeData,
         PaymentsResponseData,
-    > for {{project-name | downcase | pascal_case}} {
+    > for Asaas {
     fn get_headers(&self, req: &PaymentsAuthorizeRouterData, connectors: &Connectors,) -> CustomResult<Vec<(String, hyperswitch_masking::Maskable<String>)>,errors::ConnectorError> {
         self.build_headers(req, connectors)
     }
@@ -228,11 +228,11 @@ impl
         )?;
 
         let connector_router_data =
-            {{project-name | downcase}}::{{project-name | downcase | pascal_case}}RouterData::from((
+            asaas::AsaasRouterData::from((
                 amount,
                 req,
             ));
-        let connector_req = {{project-name | downcase}}::{{project-name | downcase | pascal_case}}PaymentsRequest::try_from(&connector_router_data)?;
+        let connector_req = asaas::AsaasPaymentsRequest::try_from(&connector_router_data)?;
         Ok(RequestContent::Json(Box::new(connector_req)))
     }
 
@@ -262,7 +262,7 @@ impl
         event_builder: Option<&mut ConnectorEvent>,
         res: Response,
     ) -> CustomResult<PaymentsAuthorizeRouterData,errors::ConnectorError> {
-        let response: {{project-name | downcase}}::{{project-name | downcase | pascal_case}}PaymentsResponse = res.response.parse_struct("{{project-name | downcase | pascal_case}} PaymentsAuthorizeResponse").change_context(errors::ConnectorError::ResponseDeserializationFailed)?;
+        let response: asaas::AsaasPaymentsResponse = res.response.parse_struct("Asaas PaymentsAuthorizeResponse").change_context(errors::ConnectorError::ResponseDeserializationFailed)?;
         event_builder.map(|i| i.set_response_body(&response));
         router_env::logger::info!(connector_response=?response);
         RouterData::try_from(ResponseRouterData {
@@ -279,7 +279,7 @@ impl
 
 impl
     ConnectorIntegration<PSync, PaymentsSyncData, PaymentsResponseData>
-    for {{project-name | downcase | pascal_case}}
+    for Asaas
 {
     fn get_headers(
         &self,
@@ -322,9 +322,9 @@ impl
         event_builder: Option<&mut ConnectorEvent>,
         res: Response,
     ) -> CustomResult<PaymentsSyncRouterData, errors::ConnectorError> {
-        let response: {{project-name | downcase}}:: {{project-name | downcase | pascal_case}}PaymentsResponse = res
+        let response: asaas:: AsaasPaymentsResponse = res
             .response
-            .parse_struct("{{project-name | downcase}} PaymentsSyncResponse")
+            .parse_struct("asaas PaymentsSyncResponse")
             .change_context(errors::ConnectorError::ResponseDeserializationFailed)?;
         event_builder.map(|i| i.set_response_body(&response));
         router_env::logger::info!(connector_response=?response);
@@ -349,7 +349,7 @@ impl
         Capture,
         PaymentsCaptureData,
         PaymentsResponseData,
-    > for {{project-name | downcase | pascal_case}}
+    > for Asaas
 {
     fn get_headers(
         &self,
@@ -403,9 +403,9 @@ impl
         event_builder: Option<&mut ConnectorEvent>,
         res: Response,
     ) -> CustomResult<PaymentsCaptureRouterData, errors::ConnectorError> {
-        let response: {{project-name | downcase }}::{{project-name | downcase | pascal_case}}PaymentsResponse = res
+        let response: asaas::AsaasPaymentsResponse = res
             .response
-            .parse_struct("{{project-name | downcase | pascal_case}} PaymentsCaptureResponse")
+            .parse_struct("Asaas PaymentsCaptureResponse")
             .change_context(errors::ConnectorError::ResponseDeserializationFailed)?;
         event_builder.map(|i| i.set_response_body(&response));
         router_env::logger::info!(connector_response=?response);
@@ -430,7 +430,7 @@ impl
         Void,
         PaymentsCancelData,
         PaymentsResponseData,
-    > for {{project-name | downcase | pascal_case}}
+    > for Asaas
 {}
 
 impl
@@ -438,7 +438,7 @@ impl
         Execute,
         RefundsData,
         RefundsResponseData,
-    > for {{project-name | downcase | pascal_case}} {
+    > for Asaas {
     fn get_headers(&self, req: &RefundsRouterData<Execute>, connectors: &Connectors,) -> CustomResult<Vec<(String,hyperswitch_masking::Maskable<String>)>,errors::ConnectorError> {
         self.build_headers(req, connectors)
     }
@@ -462,11 +462,11 @@ impl
         )?;
 
         let connector_router_data =
-            {{project-name | downcase}}::{{project-name | downcase | pascal_case}}RouterData::from((
+            asaas::AsaasRouterData::from((
                 refund_amount,
                 req,
             ));
-        let connector_req = {{project-name | downcase}}::{{project-name | downcase | pascal_case}}RefundRequest::try_from(&connector_router_data)?;
+        let connector_req = asaas::AsaasRefundRequest::try_from(&connector_router_data)?;
         Ok(RequestContent::Json(Box::new(connector_req)))
     }
 
@@ -487,7 +487,7 @@ impl
         event_builder: Option<&mut ConnectorEvent>,
         res: Response,
     ) -> CustomResult<RefundsRouterData<Execute>,errors::ConnectorError> {
-        let response: {{project-name| downcase}}::RefundResponse = res.response.parse_struct("{{project-name | downcase}} RefundResponse").change_context(errors::ConnectorError::ResponseDeserializationFailed)?;
+        let response: asaas::RefundResponse = res.response.parse_struct("asaas RefundResponse").change_context(errors::ConnectorError::ResponseDeserializationFailed)?;
         event_builder.map(|i| i.set_response_body(&response));
         router_env::logger::info!(connector_response=?response);
         RouterData::try_from(ResponseRouterData {
@@ -503,7 +503,7 @@ impl
 }
 
 impl
-    ConnectorIntegration<RSync, RefundsData, RefundsResponseData> for {{project-name | downcase | pascal_case}} {
+    ConnectorIntegration<RSync, RefundsData, RefundsResponseData> for Asaas {
     fn get_headers(&self, req: &RefundSyncRouterData,connectors: &Connectors,) -> CustomResult<Vec<(String, hyperswitch_masking::Maskable<String>)>,errors::ConnectorError> {
         self.build_headers(req, connectors)
     }
@@ -540,7 +540,7 @@ impl
         event_builder: Option<&mut ConnectorEvent>,
         res: Response,
     ) -> CustomResult<RefundSyncRouterData,errors::ConnectorError,> {
-        let response: {{project-name | downcase}}::RefundResponse = res.response.parse_struct("{{project-name | downcase}} RefundSyncResponse").change_context(errors::ConnectorError::ResponseDeserializationFailed)?;
+        let response: asaas::RefundResponse = res.response.parse_struct("asaas RefundSyncResponse").change_context(errors::ConnectorError::ResponseDeserializationFailed)?;
         event_builder.map(|i| i.set_response_body(&response));
         router_env::logger::info!(connector_response=?response);
         RouterData::try_from(ResponseRouterData {
@@ -556,7 +556,7 @@ impl
 }
 
 #[async_trait::async_trait]
-impl webhooks::IncomingWebhook for {{project-name | downcase | pascal_case}} {
+impl webhooks::IncomingWebhook for Asaas {
     fn get_webhook_object_reference_id(
         &self,
         _request: &webhooks::IncomingWebhookRequestDetails<'_>,
@@ -580,28 +580,28 @@ impl webhooks::IncomingWebhook for {{project-name | downcase | pascal_case}} {
     }
 }
 
-static {{project-name | upcase}}_SUPPORTED_PAYMENT_METHODS: LazyLock<SupportedPaymentMethods> =
+static ASAAS_SUPPORTED_PAYMENT_METHODS: LazyLock<SupportedPaymentMethods> =
     LazyLock::new(SupportedPaymentMethods::new);
 
-static {{project-name | upcase}}_CONNECTOR_INFO: ConnectorInfo = ConnectorInfo {
-    display_name: "{{project-name | downcase | pascal_case}}",
-    description: "{{project-name | downcase | pascal_case}} connector",
+static ASAAS_CONNECTOR_INFO: ConnectorInfo = ConnectorInfo {
+    display_name: "Asaas",
+    description: "Asaas connector",
     connector_type: enums::HyperswitchConnectorCategory::PaymentGateway,
     integration_status: enums::ConnectorIntegrationStatus::Live,
 };
 
-static {{project-name | upcase}}_SUPPORTED_WEBHOOK_FLOWS: [enums::EventClass; 0] = [];
+static ASAAS_SUPPORTED_WEBHOOK_FLOWS: [enums::EventClass; 0] = [];
 
-impl ConnectorSpecifications for {{project-name | downcase | pascal_case}} {
+impl ConnectorSpecifications for Asaas {
     fn get_connector_about(&self) -> Option<&'static ConnectorInfo> {
-        Some(&{{project-name | upcase}}_CONNECTOR_INFO)
+        Some(&ASAAS_CONNECTOR_INFO)
     }
 
     fn get_supported_payment_methods(&self) -> Option<&'static SupportedPaymentMethods> {
-        Some(&*{{project-name | upcase}}_SUPPORTED_PAYMENT_METHODS)
+        Some(&*ASAAS_SUPPORTED_PAYMENT_METHODS)
     }
 
     fn get_supported_webhook_flows(&self) -> Option<&'static [enums::EventClass]> {
-        Some(&{{project-name | upcase}}_SUPPORTED_WEBHOOK_FLOWS)
+        Some(&ASAAS_SUPPORTED_WEBHOOK_FLOWS)
     }
 }

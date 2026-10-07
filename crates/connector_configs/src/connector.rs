@@ -269,6 +269,7 @@ pub struct ConnectorConfig {
     pub airwallex: Option<ConnectorTomlConfig>,
     pub amazonpay: Option<ConnectorTomlConfig>,
     pub archipel: Option<ConnectorTomlConfig>,
+    pub asaas: Option<ConnectorTomlConfig>,
     pub authorizedotnet: Option<ConnectorTomlConfig>,
     pub bamboraapac: Option<ConnectorTomlConfig>,
     pub bankofamerica: Option<ConnectorTomlConfig>,
@@ -298,6 +299,7 @@ pub struct ConnectorConfig {
     pub iatapay: Option<ConnectorTomlConfig>,
     pub imerchantsolutions: Option<ConnectorTomlConfig>,
     pub itaubank: Option<ConnectorTomlConfig>,
+    pub iugu: Option<ConnectorTomlConfig>,
     #[cfg(feature = "payouts")]
     pub itaubank_payout: Option<ConnectorTomlConfig>,
     pub opennode: Option<ConnectorTomlConfig>,

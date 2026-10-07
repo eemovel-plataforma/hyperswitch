@@ -8884,3 +8884,11 @@ payment_method_type = "Discover"
 payment_method_type = "DinersClub"
 [[givepayments.debit]]
 payment_method_type = "UnionPay"
+
+[iugu]
+[iugu.connector_auth.HeaderKey]
+api_key = "API Key"
+
+[asaas]
+[asaas.connector_auth.HeaderKey]
+api_key = "API Key"

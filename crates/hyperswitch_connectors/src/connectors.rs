@@ -6,6 +6,7 @@ pub mod affirm;
 pub mod airwallex;
 pub mod amazonpay;
 pub mod archipel;
+pub mod asaas;
 pub mod authipay;
 pub mod authorizedotnet;
 pub mod bambora;
@@ -67,6 +68,7 @@ pub mod imerchantsolutions;
 pub mod inespay;
 pub mod interpayments;
 pub mod itaubank;
+pub mod iugu;
 pub mod jpmorgan;
 pub mod juspaythreedsserver;
 pub mod katapult;
@@ -189,4 +191,6 @@ pub use self::{
     wellsfargo::Wellsfargo, wellsfargopayout::Wellsfargopayout, wise::Wise, worldline::Worldline,
     worldpay::Worldpay, worldpaymodular::Worldpaymodular, worldpayvantiv::Worldpayvantiv,
     worldpayxml::Worldpayxml, xendit::Xendit, zen::Zen, zift::Zift, zsl::Zsl,
+ iugu::Iugu,
+ asaas::Asaas,
 };

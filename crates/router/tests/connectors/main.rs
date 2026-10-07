@@ -134,6 +134,8 @@ mod trustpay;
 mod trustpayments;
 mod tsys;
 mod unified_authentication_service;
+mod iugu;
+mod asaas;
 mod utils;
 mod vgs;
 mod volt;

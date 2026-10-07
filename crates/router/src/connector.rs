@@ -3,6 +3,8 @@ pub mod utils;
 #[cfg(feature = "dummy_connector")]
 pub use hyperswitch_connectors::connectors::DummyConnector;
 pub use hyperswitch_connectors::connectors::{
+    asaas, asaas::Asaas,
+    iugu, iugu::Iugu,
     absa_sanlam, absa_sanlam::AbsaSanlam, aci, aci::Aci, adyen, adyen::Adyen, adyenplatform,
     adyenplatform::Adyenplatform, affirm, affirm::Affirm, airwallex, airwallex::Airwallex,
     amazonpay, amazonpay::Amazonpay, archipel, archipel::Archipel, authipay, authipay::Authipay,
