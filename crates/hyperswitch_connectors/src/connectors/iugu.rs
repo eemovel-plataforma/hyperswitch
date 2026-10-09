@@ -695,29 +695,63 @@ impl ConnectorIntegration<RSync, RefundsData, RefundsResponseData> for Iugu {
     }
 }
 
+// Iugu incoming webhooks.
+//
+// Iugu posts `application/x-www-form-urlencoded` (not JSON), e.g.
+//   event=invoice.status_changed&data[id]=<invoice id>&data[status]=paid
+// `data[id]` is the Iugu invoice id, which is the connector_transaction_id this
+// connector stores, so it is used as the payment reference.
+//
+// Status map (mirrors `_IUGU_STATUS_MAP` in the eemovel backend parser,
+// packages/backend/src/billing/webhook_messages.py), only for `invoice.status_changed`:
+//   paid, externally_paid                       -> PaymentIntentSuccess
+//   expired, cancelled, canceled, in_protest    -> PaymentIntentFailure
+//   refunded                                    -> RefundSuccess
+//   pending, authorized, in_analysis            -> PaymentIntentProcessing
+//   chargeback / anything else / other events   -> EventNotSupported
+//
+// Iugu's basic webhook carries no body signature, so source verification is left
+// at the trait default.
+fn get_iugu_webhook_body(
+    request: &webhooks::IncomingWebhookRequestDetails<'_>,
+) -> CustomResult<iugu::IuguWebhookBody, errors::ConnectorError> {
+    serde_urlencoded::from_bytes::<iugu::IuguWebhookBody>(request.body)
+        .change_context(errors::ConnectorError::WebhookBodyDecodingFailed)
+}
+
 #[async_trait::async_trait]
 impl webhooks::IncomingWebhook for Iugu {
     fn get_webhook_object_reference_id(
         &self,
-        _request: &webhooks::IncomingWebhookRequestDetails<'_>,
+        request: &webhooks::IncomingWebhookRequestDetails<'_>,
     ) -> CustomResult<api_models::webhooks::ObjectReferenceId, errors::ConnectorError> {
-        Err(report!(errors::ConnectorError::WebhooksNotImplemented))
+        let body = get_iugu_webhook_body(request)?;
+        let invoice_id = body
+            .invoice_id
+            .ok_or(errors::ConnectorError::WebhookReferenceIdNotFound)?;
+        Ok(api_models::webhooks::ObjectReferenceId::PaymentId(
+            api_models::payments::PaymentIdType::ConnectorTransactionId(invoice_id),
+        ))
     }
 
     fn get_webhook_event_type(
         &self,
-        _request: &webhooks::IncomingWebhookRequestDetails<'_>,
+        request: &webhooks::IncomingWebhookRequestDetails<'_>,
         _context: Option<&webhooks::WebhookContext>,
     ) -> CustomResult<api_models::webhooks::IncomingWebhookEvent, errors::ConnectorError> {
-        Err(report!(errors::ConnectorError::WebhooksNotImplemented))
+        let body = get_iugu_webhook_body(request)?;
+        Ok(iugu::get_iugu_webhook_event(
+            &body.event,
+            body.status.as_deref(),
+        ))
     }
 
     fn get_webhook_resource_object(
         &self,
-        _request: &webhooks::IncomingWebhookRequestDetails<'_>,
+        request: &webhooks::IncomingWebhookRequestDetails<'_>,
     ) -> CustomResult<Box<dyn hyperswitch_masking::ErasedMaskSerialize>, errors::ConnectorError>
     {
-        Err(report!(errors::ConnectorError::WebhooksNotImplemented))
+        Ok(Box::new(get_iugu_webhook_body(request)?))
     }
 }
 

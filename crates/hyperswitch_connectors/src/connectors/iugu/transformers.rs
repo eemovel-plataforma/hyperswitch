@@ -822,9 +822,76 @@ impl IuguErrorResponse {
     }
 }
 
+/// Iugu webhook body. Iugu posts `application/x-www-form-urlencoded` with flat
+/// bracketed keys (e.g. `event=invoice.status_changed&data[id]=...&data[status]=paid`).
+/// Unknown fields (`data[account_id]`, ...) are ignored.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct IuguWebhookBody {
+    pub event: String,
+    #[serde(rename = "data[id]")]
+    pub invoice_id: Option<String>,
+    #[serde(rename = "data[status]")]
+    pub status: Option<String>,
+    #[serde(rename = "data[paid_cents]")]
+    pub paid_cents: Option<String>,
+    #[serde(rename = "data[total_paid_cents]")]
+    pub total_paid_cents: Option<String>,
+    #[serde(rename = "data[external_reference]")]
+    pub external_reference: Option<String>,
+}
+
+/// Maps an Iugu webhook (`event` + `data[status]`) to a Hyperswitch webhook event.
+/// Mirrors `_IUGU_STATUS_MAP` of the eemovel backend (billing/webhook_messages.py).
+/// `chargeback` is intentionally `EventNotSupported`: the Hyperswitch dispute flow
+/// needs dispute details (connector dispute id, amount, ...) that the Iugu invoice
+/// webhook does not carry.
+pub fn get_iugu_webhook_event(
+    event: &str,
+    status: Option<&str>,
+) -> api_models::webhooks::IncomingWebhookEvent {
+    use api_models::webhooks::IncomingWebhookEvent;
+    if event != "invoice.status_changed" {
+        return IncomingWebhookEvent::EventNotSupported;
+    }
+    match status {
+        Some("paid") | Some("externally_paid") => IncomingWebhookEvent::PaymentIntentSuccess,
+        Some("expired") | Some("cancelled") | Some("canceled") | Some("in_protest") => {
+            IncomingWebhookEvent::PaymentIntentFailure
+        }
+        Some("refunded") => IncomingWebhookEvent::RefundSuccess,
+        Some("pending") | Some("authorized") | Some("in_analysis") => {
+            IncomingWebhookEvent::PaymentIntentProcessing
+        }
+        _ => IncomingWebhookEvent::EventNotSupported,
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{gateway_error_from_iugu, iugu_attempt_status, months_for_iugu};
+    use super::{
+        gateway_error_from_iugu, get_iugu_webhook_event, iugu_attempt_status, months_for_iugu,
+        IuguWebhookBody,
+    };
+    use api_models::webhooks::IncomingWebhookEvent;
+
+    #[test]
+    fn webhook_form_body_is_parsed_and_mapped() {
+        let body = b"event=invoice.status_changed&data%5Bid%5D=INV123&data%5Bstatus%5D=paid&data%5Baccount_id%5D=x";
+        let parsed: IuguWebhookBody = serde_urlencoded::from_bytes(body).unwrap();
+        assert_eq!(parsed.invoice_id.as_deref(), Some("INV123"));
+        assert!(matches!(
+            get_iugu_webhook_event(&parsed.event, parsed.status.as_deref()),
+            IncomingWebhookEvent::PaymentIntentSuccess
+        ));
+        assert!(matches!(
+            get_iugu_webhook_event("invoice.created", Some("paid")),
+            IncomingWebhookEvent::EventNotSupported
+        ));
+        assert!(matches!(
+            get_iugu_webhook_event("invoice.status_changed", Some("chargeback")),
+            IncomingWebhookEvent::EventNotSupported
+        ));
+    }
 
     #[test]
     fn avista_omits_months_and_twelve_is_sent() {
