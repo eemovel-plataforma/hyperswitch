@@ -870,7 +870,7 @@ pub fn get_iugu_webhook_event(
 mod tests {
     use super::{
         gateway_error_from_iugu, get_iugu_webhook_event, iugu_attempt_status, months_for_iugu,
-        IuguWebhookBody,
+        IuguErrorResponse, IuguPaymentsResponse, IuguWebhookBody,
     };
     use api_models::webhooks::IncomingWebhookEvent;
 
@@ -925,5 +925,39 @@ mod tests {
         );
         assert_eq!(parts.code, "payer.cpf_cnpj");
         assert!(parts.message.contains("não pode ficar em branco"));
+    }
+
+    #[test]
+    fn webhook_body_is_not_a_payment_sync_response() {
+        // Root cause of IR_04: the webhook body re-serialized by the router has
+        // `data[id]` keys, so it parses as an empty `IuguPaymentsResponse`.
+        let body = b"event=invoice.status_changed&data%5Bid%5D=INV123&data%5Bstatus%5D=paid&data%5Bpaid_cents%5D=1500";
+        let webhook: IuguWebhookBody = serde_urlencoded::from_bytes(body).unwrap();
+        let json = serde_json::to_vec(&webhook).unwrap();
+        let response: IuguPaymentsResponse = serde_json::from_slice(&json).unwrap();
+        assert!(response.transaction_id().is_err());
+    }
+
+    #[test]
+    fn invoice_get_response_maps_pending_and_paid() {
+        let json = r#"{"id":"INV123","status":"pending","total_cents":1500,"pix":{"qrcode":"https://x/y.png","qrcode_text":"000201"}}"#;
+        let response: IuguPaymentsResponse = serde_json::from_str(json).unwrap();
+        assert_eq!(response.transaction_id().unwrap(), "INV123");
+        assert_eq!(
+            iugu_attempt_status(Some("pending"), None),
+            common_enums::AttemptStatus::AuthenticationPending
+        );
+        assert_eq!(
+            iugu_attempt_status(Some("paid"), None),
+            common_enums::AttemptStatus::Charged
+        );
+    }
+
+    #[test]
+    fn unauthorized_body_parses_as_error() {
+        let error: IuguErrorResponse = serde_json::from_str(r#"{"errors":"Unauthorized"}"#).unwrap();
+        let parts = error.into_parts();
+        assert_eq!(parts.code, "iugu_error");
+        assert_eq!(parts.message, "Unauthorized");
     }
 }

@@ -4,6 +4,7 @@ use error_stack::ResultExt;
 use hyperswitch_masking::{Mask, PeekInterface, Secret};
 
 use common_utils::{
+    crypto::Encryptable,
     errors::CustomResult,
     ext_traits::BytesExt,
     request::{Method, Request, RequestBuilder, RequestContent},
@@ -710,8 +711,13 @@ impl ConnectorIntegration<RSync, RefundsData, RefundsResponseData> for Iugu {
 //   pending, authorized, in_analysis            -> PaymentIntentProcessing
 //   chargeback / anything else / other events   -> EventNotSupported
 //
-// Iugu's basic webhook carries no body signature, so source verification is left
-// at the trait default.
+// Iugu's basic webhook carries no body signature. The trait default would verify
+// with `NoAlgorithm` (always true), making the router use
+// `CallConnectorAction::HandleResponse`: no HTTP call, and the webhook body would be
+// parsed as a PSync response (IR_04 `invoice_id`) and trusted without authentication.
+// `verify_webhook_source` returns false instead, so the router uses
+// `CallConnectorAction::Trigger`: a real `GET /invoices/{id}` with the api_key, and
+// the status comes from Iugu, not from the unauthenticated webhook body.
 fn get_iugu_webhook_body(
     request: &webhooks::IncomingWebhookRequestDetails<'_>,
 ) -> CustomResult<iugu::IuguWebhookBody, errors::ConnectorError> {
@@ -721,6 +727,18 @@ fn get_iugu_webhook_body(
 
 #[async_trait::async_trait]
 impl webhooks::IncomingWebhook for Iugu {
+    async fn verify_webhook_source(
+        &self,
+        _request: &webhooks::IncomingWebhookRequestDetails<'_>,
+        _merchant_id: &common_utils::id_type::MerchantId,
+        _connector_webhook_details: Option<common_utils::pii::SecretSerdeValue>,
+        _connector_account_details: Encryptable<Secret<serde_json::Value>>,
+        _connector_name: &str,
+    ) -> CustomResult<bool, errors::ConnectorError> {
+        // Iugu does not sign the webhook body. Returning false makes the router
+        // trigger a real PSync (GET /invoices/{id}) instead of trusting the body.
+        Ok(false)
+    }
     fn get_webhook_object_reference_id(
         &self,
         request: &webhooks::IncomingWebhookRequestDetails<'_>,
