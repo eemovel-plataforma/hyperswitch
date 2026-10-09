@@ -1585,6 +1585,12 @@ impl ForeignTryFrom<(Connector, &ConnectorAuthType, Option<&serde_json::Value>)>
                 _ => Err(err("Givepayments requires HeaderKey auth type")),
             },
             Connector::Netcetera => Ok(Self::Netcetera),
+            Connector::Asaas | Connector::Iugu => Err(error_stack::report!(
+                errors::ApiErrorResponse::InternalServerError
+            )
+            .attach_printable(format!(
+                "Connector {connector} uses the direct router integration; v1.126.0 ConnectorSpecificConfig has no variant for it"
+            ))),
             // --- Unsupported connectors ---
             _ => Err(
                 error_stack::report!(errors::ApiErrorResponse::InternalServerError)

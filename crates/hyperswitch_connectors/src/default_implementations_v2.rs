@@ -384,6 +384,7 @@ macro_rules! default_imp_for_new_connector_integration_payment {
 }
 
 default_imp_for_new_connector_integration_payment!(
+    connectors::Asaas,
     connectors::Vgs,
     connectors::Airwallex,
     connectors::Amazonpay,
@@ -449,6 +450,7 @@ default_imp_for_new_connector_integration_payment!(
     connectors::Inespay,
     connectors::Interpayments,
     connectors::Itaubank,
+    connectors::Iugu,
     connectors::Jpmorgan,
     connectors::Juspaythreedsserver,
     connectors::Katapult,
@@ -549,6 +551,7 @@ macro_rules! default_imp_for_new_connector_integration_refund {
 }
 
 default_imp_for_new_connector_integration_refund!(
+    connectors::Asaas,
     connectors::Hyperwallet,
     connectors::Vgs,
     connectors::AbsaSanlam,
@@ -616,6 +619,7 @@ default_imp_for_new_connector_integration_refund!(
     connectors::Inespay,
     connectors::Interpayments,
     connectors::Itaubank,
+    connectors::Iugu,
     connectors::Jpmorgan,
     connectors::Juspaythreedsserver,
     connectors::Katapult,
@@ -711,6 +715,7 @@ macro_rules! default_imp_for_new_connector_integration_connector_authentication_
 }
 
 default_imp_for_new_connector_integration_connector_authentication_token!(
+    connectors::Asaas,
     connectors::Vgs,
     connectors::AbsaSanlam,
     connectors::Aci,
@@ -776,6 +781,7 @@ default_imp_for_new_connector_integration_connector_authentication_token!(
     connectors::Inespay,
     connectors::Interpayments,
     connectors::Itaubank,
+    connectors::Iugu,
     connectors::Jpmorgan,
     connectors::Juspaythreedsserver,
     connectors::Klarna,
@@ -866,6 +872,7 @@ macro_rules! default_imp_for_new_connector_integration_connector_access_token {
 }
 
 default_imp_for_new_connector_integration_connector_access_token!(
+    connectors::Asaas,
     connectors::Vgs,
     connectors::AbsaSanlam,
     connectors::Aci,
@@ -933,6 +940,7 @@ default_imp_for_new_connector_integration_connector_access_token!(
     connectors::Inespay,
     connectors::Interpayments,
     connectors::Itaubank,
+    connectors::Iugu,
     connectors::Jpmorgan,
     connectors::Juspaythreedsserver,
     connectors::Katapult,
@@ -1034,6 +1042,7 @@ macro_rules! default_imp_for_new_connector_integration_accept_dispute {
 }
 
 default_imp_for_new_connector_integration_accept_dispute!(
+    connectors::Asaas,
     connectors::Vgs,
     connectors::AbsaSanlam,
     connectors::Aci,
@@ -1100,6 +1109,7 @@ default_imp_for_new_connector_integration_accept_dispute!(
     connectors::Inespay,
     connectors::Interpayments,
     connectors::Itaubank,
+    connectors::Iugu,
     connectors::Jpmorgan,
     connectors::Juspaythreedsserver,
     connectors::Katapult,
@@ -1208,6 +1218,7 @@ default_imp_for_new_connector_integration_fetch_disputes!(
     connectors::Airwallex,
     connectors::Amazonpay,
     connectors::Archipel,
+    connectors::Asaas,
     connectors::Authipay,
     connectors::Authorizedotnet,
     connectors::Bambora,
@@ -1267,6 +1278,7 @@ default_imp_for_new_connector_integration_fetch_disputes!(
     connectors::Inespay,
     connectors::Interpayments,
     connectors::Itaubank,
+    connectors::Iugu,
     connectors::Jpmorgan,
     connectors::Juspaythreedsserver,
     connectors::Katapult,
@@ -1376,6 +1388,7 @@ default_imp_for_new_connector_integration_dispute_sync!(
     connectors::Airwallex,
     connectors::Amazonpay,
     connectors::Archipel,
+    connectors::Asaas,
     connectors::Authipay,
     connectors::Authorizedotnet,
     connectors::Bambora,
@@ -1435,6 +1448,7 @@ default_imp_for_new_connector_integration_dispute_sync!(
     connectors::Inespay,
     connectors::Interpayments,
     connectors::Itaubank,
+    connectors::Iugu,
     connectors::Jpmorgan,
     connectors::Juspaythreedsserver,
     connectors::Katapult,
@@ -1536,6 +1550,7 @@ macro_rules! default_imp_for_new_connector_integration_defend_dispute {
 }
 
 default_imp_for_new_connector_integration_defend_dispute!(
+    connectors::Asaas,
     connectors::Vgs,
     connectors::AbsaSanlam,
     connectors::Aci,
@@ -1603,6 +1618,7 @@ default_imp_for_new_connector_integration_defend_dispute!(
     connectors::Inespay,
     connectors::Interpayments,
     connectors::Itaubank,
+    connectors::Iugu,
     connectors::Jpmorgan,
     connectors::Juspaythreedsserver,
     connectors::Katapult,
@@ -1703,6 +1719,7 @@ macro_rules! default_imp_for_new_connector_integration_submit_evidence {
 }
 
 default_imp_for_new_connector_integration_submit_evidence!(
+    connectors::Asaas,
     connectors::Vgs,
     connectors::AbsaSanlam,
     connectors::Aci,
@@ -1769,6 +1786,7 @@ default_imp_for_new_connector_integration_submit_evidence!(
     connectors::Inespay,
     connectors::Interpayments,
     connectors::Itaubank,
+    connectors::Iugu,
     connectors::Jpmorgan,
     connectors::Juspaythreedsserver,
     connectors::Klarna,
@@ -1879,6 +1897,7 @@ macro_rules! default_imp_for_new_connector_integration_file_upload {
 }
 
 default_imp_for_new_connector_integration_file_upload!(
+    connectors::Asaas,
     connectors::Vgs,
     connectors::AbsaSanlam,
     connectors::Aci,
@@ -1946,6 +1965,7 @@ default_imp_for_new_connector_integration_file_upload!(
     connectors::Inespay,
     connectors::Interpayments,
     connectors::Itaubank,
+    connectors::Iugu,
     connectors::Jpmorgan,
     connectors::Juspaythreedsserver,
     connectors::Katapult,
@@ -2048,6 +2068,7 @@ macro_rules! default_imp_for_new_connector_integration_payouts_create {
 
 #[cfg(feature = "payouts")]
 default_imp_for_new_connector_integration_payouts_create!(
+    connectors::Asaas,
     connectors::Vgs,
     connectors::AbsaSanlam,
     connectors::Aci,
@@ -2115,6 +2136,7 @@ default_imp_for_new_connector_integration_payouts_create!(
     connectors::Inespay,
     connectors::Interpayments,
     connectors::Itaubank,
+    connectors::Iugu,
     connectors::Jpmorgan,
     connectors::Juspaythreedsserver,
     connectors::Katapult,
@@ -2217,6 +2239,7 @@ macro_rules! default_imp_for_new_connector_integration_payouts_eligibility {
 
 #[cfg(feature = "payouts")]
 default_imp_for_new_connector_integration_payouts_eligibility!(
+    connectors::Asaas,
     connectors::Vgs,
     connectors::AbsaSanlam,
     connectors::Aci,
@@ -2284,6 +2307,7 @@ default_imp_for_new_connector_integration_payouts_eligibility!(
     connectors::Inespay,
     connectors::Interpayments,
     connectors::Itaubank,
+    connectors::Iugu,
     connectors::Jpmorgan,
     connectors::Juspaythreedsserver,
     connectors::Katapult,
@@ -2386,6 +2410,7 @@ macro_rules! default_imp_for_new_connector_integration_payouts_fulfill {
 
 #[cfg(feature = "payouts")]
 default_imp_for_new_connector_integration_payouts_fulfill!(
+    connectors::Asaas,
     connectors::Vgs,
     connectors::AbsaSanlam,
     connectors::Aci,
@@ -2453,6 +2478,7 @@ default_imp_for_new_connector_integration_payouts_fulfill!(
     connectors::Inespay,
     connectors::Interpayments,
     connectors::Itaubank,
+    connectors::Iugu,
     connectors::Jpmorgan,
     connectors::Juspaythreedsserver,
     connectors::Katapult,
@@ -2555,6 +2581,7 @@ macro_rules! default_imp_for_new_connector_integration_payouts_cancel {
 
 #[cfg(feature = "payouts")]
 default_imp_for_new_connector_integration_payouts_cancel!(
+    connectors::Asaas,
     connectors::Vgs,
     connectors::AbsaSanlam,
     connectors::Aci,
@@ -2622,6 +2649,7 @@ default_imp_for_new_connector_integration_payouts_cancel!(
     connectors::Inespay,
     connectors::Interpayments,
     connectors::Itaubank,
+    connectors::Iugu,
     connectors::Jpmorgan,
     connectors::Juspaythreedsserver,
     connectors::Katapult,
@@ -2724,6 +2752,7 @@ macro_rules! default_imp_for_new_connector_integration_payouts_quote {
 
 #[cfg(feature = "payouts")]
 default_imp_for_new_connector_integration_payouts_quote!(
+    connectors::Asaas,
     connectors::Vgs,
     connectors::AbsaSanlam,
     connectors::Aci,
@@ -2791,6 +2820,7 @@ default_imp_for_new_connector_integration_payouts_quote!(
     connectors::Inespay,
     connectors::Interpayments,
     connectors::Itaubank,
+    connectors::Iugu,
     connectors::Jpmorgan,
     connectors::Juspaythreedsserver,
     connectors::Katapult,
@@ -2893,6 +2923,7 @@ macro_rules! default_imp_for_new_connector_integration_payouts_recipient {
 
 #[cfg(feature = "payouts")]
 default_imp_for_new_connector_integration_payouts_recipient!(
+    connectors::Asaas,
     connectors::Vgs,
     connectors::AbsaSanlam,
     connectors::Aci,
@@ -2960,6 +2991,7 @@ default_imp_for_new_connector_integration_payouts_recipient!(
     connectors::Inespay,
     connectors::Interpayments,
     connectors::Itaubank,
+    connectors::Iugu,
     connectors::Jpmorgan,
     connectors::Juspaythreedsserver,
     connectors::Katapult,
@@ -3062,6 +3094,7 @@ macro_rules! default_imp_for_new_connector_integration_payouts_sync {
 
 #[cfg(feature = "payouts")]
 default_imp_for_new_connector_integration_payouts_sync!(
+    connectors::Asaas,
     connectors::Vgs,
     connectors::AbsaSanlam,
     connectors::Aci,
@@ -3129,6 +3162,7 @@ default_imp_for_new_connector_integration_payouts_sync!(
     connectors::Inespay,
     connectors::Interpayments,
     connectors::Itaubank,
+    connectors::Iugu,
     connectors::Jpmorgan,
     connectors::Juspaythreedsserver,
     connectors::Katapult,
@@ -3231,6 +3265,7 @@ macro_rules! default_imp_for_new_connector_integration_payouts_recipient_account
 
 #[cfg(feature = "payouts")]
 default_imp_for_new_connector_integration_payouts_recipient_account!(
+    connectors::Asaas,
     connectors::Vgs,
     connectors::AbsaSanlam,
     connectors::Aci,
@@ -3298,6 +3333,7 @@ default_imp_for_new_connector_integration_payouts_recipient_account!(
     connectors::Inespay,
     connectors::Interpayments,
     connectors::Itaubank,
+    connectors::Iugu,
     connectors::Jpmorgan,
     connectors::Juspaythreedsserver,
     connectors::Katapult,
@@ -3398,6 +3434,7 @@ macro_rules! default_imp_for_new_connector_integration_webhook_source_verificati
 }
 
 default_imp_for_new_connector_integration_webhook_source_verification!(
+    connectors::Asaas,
     connectors::Vgs,
     connectors::AbsaSanlam,
     connectors::Aci,
@@ -3465,6 +3502,7 @@ default_imp_for_new_connector_integration_webhook_source_verification!(
     connectors::Inespay,
     connectors::Interpayments,
     connectors::Itaubank,
+    connectors::Iugu,
     connectors::Jpmorgan,
     connectors::Juspaythreedsserver,
     connectors::Katapult,
@@ -3567,6 +3605,7 @@ macro_rules! default_imp_for_new_connector_integration_frm_sale {
 
 #[cfg(feature = "frm")]
 default_imp_for_new_connector_integration_frm_sale!(
+    connectors::Asaas,
     connectors::Vgs,
     connectors::AbsaSanlam,
     connectors::Aci,
@@ -3634,6 +3673,7 @@ default_imp_for_new_connector_integration_frm_sale!(
     connectors::Inespay,
     connectors::Interpayments,
     connectors::Itaubank,
+    connectors::Iugu,
     connectors::Jpmorgan,
     connectors::Juspaythreedsserver,
     connectors::Katapult,
@@ -3736,6 +3776,7 @@ macro_rules! default_imp_for_new_connector_integration_frm_checkout {
 
 #[cfg(feature = "frm")]
 default_imp_for_new_connector_integration_frm_checkout!(
+    connectors::Asaas,
     connectors::Vgs,
     connectors::AbsaSanlam,
     connectors::Aci,
@@ -3803,6 +3844,7 @@ default_imp_for_new_connector_integration_frm_checkout!(
     connectors::Inespay,
     connectors::Interpayments,
     connectors::Itaubank,
+    connectors::Iugu,
     connectors::Jpmorgan,
     connectors::Juspaythreedsserver,
     connectors::Katapult,
@@ -3905,6 +3947,7 @@ macro_rules! default_imp_for_new_connector_integration_frm_transaction {
 
 #[cfg(feature = "frm")]
 default_imp_for_new_connector_integration_frm_transaction!(
+    connectors::Asaas,
     connectors::Vgs,
     connectors::AbsaSanlam,
     connectors::Aci,
@@ -3972,6 +4015,7 @@ default_imp_for_new_connector_integration_frm_transaction!(
     connectors::Inespay,
     connectors::Interpayments,
     connectors::Itaubank,
+    connectors::Iugu,
     connectors::Jpmorgan,
     connectors::Juspaythreedsserver,
     connectors::Katapult,
@@ -4074,6 +4118,7 @@ macro_rules! default_imp_for_new_connector_integration_frm_fulfillment {
 
 #[cfg(feature = "frm")]
 default_imp_for_new_connector_integration_frm_fulfillment!(
+    connectors::Asaas,
     connectors::Vgs,
     connectors::AbsaSanlam,
     connectors::Aci,
@@ -4141,6 +4186,7 @@ default_imp_for_new_connector_integration_frm_fulfillment!(
     connectors::Inespay,
     connectors::Interpayments,
     connectors::Itaubank,
+    connectors::Iugu,
     connectors::Jpmorgan,
     connectors::Juspaythreedsserver,
     connectors::Katapult,
@@ -4243,6 +4289,7 @@ macro_rules! default_imp_for_new_connector_integration_frm_record_return {
 
 #[cfg(feature = "frm")]
 default_imp_for_new_connector_integration_frm_record_return!(
+    connectors::Asaas,
     connectors::Vgs,
     connectors::AbsaSanlam,
     connectors::Aci,
@@ -4310,6 +4357,7 @@ default_imp_for_new_connector_integration_frm_record_return!(
     connectors::Inespay,
     connectors::Interpayments,
     connectors::Itaubank,
+    connectors::Iugu,
     connectors::Jpmorgan,
     connectors::Juspaythreedsserver,
     connectors::Katapult,
@@ -4409,6 +4457,7 @@ macro_rules! default_imp_for_new_connector_integration_revoking_mandates {
 }
 
 default_imp_for_new_connector_integration_revoking_mandates!(
+    connectors::Asaas,
     connectors::Paysafe,
     connectors::Vgs,
     connectors::AbsaSanlam,
@@ -4477,6 +4526,7 @@ default_imp_for_new_connector_integration_revoking_mandates!(
     connectors::Inespay,
     connectors::Interpayments,
     connectors::Itaubank,
+    connectors::Iugu,
     connectors::Jpmorgan,
     connectors::Juspaythreedsserver,
     connectors::Katapult,
@@ -4569,6 +4619,8 @@ macro_rules! default_imp_for_new_connector_integration_frm {
 
 #[cfg(feature = "frm")]
 default_imp_for_new_connector_integration_frm!(
+    connectors::Asaas,
+    connectors::Iugu,
     connectors::AbsaSanlam,
     connectors::Imerchantsolutions,
     connectors::Loonio,
@@ -4735,6 +4787,8 @@ macro_rules! default_imp_for_new_connector_integration_connector_authentication 
 }
 
 default_imp_for_new_connector_integration_connector_authentication!(
+    connectors::Asaas,
+    connectors::Iugu,
     connectors::AbsaSanlam,
     connectors::Imerchantsolutions,
     connectors::Loonio,
@@ -4890,6 +4944,8 @@ macro_rules! default_imp_for_new_connector_integration_revenue_recovery {
 }
 
 default_imp_for_new_connector_integration_revenue_recovery!(
+    connectors::Asaas,
+    connectors::Iugu,
     connectors::AbsaSanlam,
     connectors::Imerchantsolutions,
     connectors::Loonio,
@@ -5063,6 +5119,7 @@ default_imp_for_new_connector_integration_external_vault!(
     connectors::Airwallex,
     connectors::Amazonpay,
     connectors::Archipel,
+    connectors::Asaas,
     connectors::Authipay,
     connectors::Authorizedotnet,
     connectors::Barclaycard,
@@ -5122,6 +5179,7 @@ default_imp_for_new_connector_integration_external_vault!(
     connectors::Inespay,
     connectors::Interpayments,
     connectors::Itaubank,
+    connectors::Iugu,
     connectors::Jpmorgan,
     connectors::Juspaythreedsserver,
     connectors::Katapult,
@@ -5230,6 +5288,7 @@ default_imp_for_new_connector_integration_external_vault_proxy!(
     connectors::Airwallex,
     connectors::Amazonpay,
     connectors::Archipel,
+    connectors::Asaas,
     connectors::Authipay,
     connectors::Authorizedotnet,
     connectors::Bambora,
@@ -5288,6 +5347,7 @@ default_imp_for_new_connector_integration_external_vault_proxy!(
     connectors::Inespay,
     connectors::Interpayments,
     connectors::Itaubank,
+    connectors::Iugu,
     connectors::Jpmorgan,
     connectors::Juspaythreedsserver,
     connectors::Katapult,
@@ -5408,6 +5468,7 @@ default_imp_for_new_connector_integration_webhook_register!(
     connectors::Airwallex,
     connectors::Amazonpay,
     connectors::Archipel,
+    connectors::Asaas,
     connectors::Authipay,
     connectors::Authorizedotnet,
     connectors::Bambora,
@@ -5467,6 +5528,7 @@ default_imp_for_new_connector_integration_webhook_register!(
     connectors::Inespay,
     connectors::Interpayments,
     connectors::Itaubank,
+    connectors::Iugu,
     connectors::Jpmorgan,
     connectors::Juspaythreedsserver,
     connectors::Katapult,

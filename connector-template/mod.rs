@@ -42,14 +42,12 @@ use hyperswitch_interfaces::{
 use std::sync::LazyLock;
 
 use common_enums::enums;
-use hyperswitch_interfaces::api::ConnectorSpecifications;
 use hyperswitch_domain_models::router_response_types::{ConnectorInfo, SupportedPaymentMethods};
 use crate::{
     constants::headers,
     types::ResponseRouterData,
     utils,
 };
-use hyperswitch_domain_models::payment_method_data::PaymentMethodData;
 
 use transformers as {{project-name | downcase}};
 

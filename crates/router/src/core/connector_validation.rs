@@ -101,6 +101,10 @@ impl ConnectorAuthTypeAndMetadataValidation<'_> {
                 archipel::transformers::ArchipelConfigData::try_from(self.connector_meta_data)?;
                 Ok(())
             }
+            api_enums::Connector::Asaas => {
+                asaas::transformers::AsaasAuthType::try_from(self.auth_type)?;
+                Ok(())
+            }
             api_enums::Connector::Authipay => {
                 authipay::transformers::AuthipayAuthType::try_from(self.auth_type)?;
                 Ok(())
@@ -344,6 +348,10 @@ impl ConnectorAuthTypeAndMetadataValidation<'_> {
             }
             api_enums::Connector::Itaubank => {
                 itaubank::transformers::ItaubankAuthType::try_from(self.auth_type)?;
+                Ok(())
+            }
+            api_enums::Connector::Iugu => {
+                iugu::transformers::IuguAuthType::try_from(self.auth_type)?;
                 Ok(())
             }
             api_enums::Connector::Jpmorgan => {

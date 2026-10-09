@@ -125,6 +125,9 @@ impl ConnectorData {
                 enums::Connector::Archipel => {
                     Ok(ConnectorEnum::Old(Box::new(connector::Archipel::new())))
                 }
+                enums::Connector::Asaas => {
+                    Ok(ConnectorEnum::Old(Box::new(connector::Asaas::new())))
+                }
                 enums::Connector::Authipay => {
                     Ok(ConnectorEnum::Old(Box::new(connector::Authipay::new())))
                 }
@@ -325,6 +328,7 @@ impl ConnectorData {
                 enums::Connector::Itaubank => {
                     Ok(ConnectorEnum::Old(Box::new(connector::Itaubank::new())))
                 }
+                enums::Connector::Iugu => Ok(ConnectorEnum::Old(Box::new(connector::Iugu::new()))),
                 enums::Connector::Jpmorgan => {
                     Ok(ConnectorEnum::Old(Box::new(connector::Jpmorgan::new())))
                 }

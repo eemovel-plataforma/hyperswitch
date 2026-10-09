@@ -203,6 +203,7 @@ airwallex.base_url = "https://api-demo.airwallex.com/"
 amazonpay.base_url = "https://pay-api.amazon.com/sandbox/v2"
 applepay.base_url = "https://apple-pay-gateway-cert.apple.com/"
 archipel.base_url = "https://{{merchant_endpoint_prefix}}/ArchiPEL/Transaction/v1"
+asaas.base_url = "https://api-sandbox.asaas.com/v3"
 authipay.base_url = "https://prod.emea.api.fiservapps.com/sandbox/ipp/payments-gateway/v2/"
 authorizedotnet.base_url = "https://apitest.authorize.net/xml/v1/request.api"
 bambora.base_url = "https://api.na.bambora.com"
@@ -268,6 +269,7 @@ imerchantsolutions.base_url = "https://imerchantsolutions.com/api"
 inespay.base_url = "https://apiflow.inespay.com/san/v21"
 interpayments.base_url = "https://api-test.interpayments.com/v1"
 itaubank.base_url = "https://sandbox.devportal.itau.com.br/"
+iugu.base_url = "https://api.iugu.com/v1"
 jpmorgan.base_url = "https://api-mock.payments.jpmorgan.com/api/v2"
 juspaythreedsserver.base_url = "http://localhost:8000"
 katapult.base_url = "https://sandbox.katapult.com/api/v3"
@@ -517,6 +519,7 @@ hipay = { long_lived_token = false, payment_method = "card" }
 braintree = { long_lived_token = false, payment_method = "card,wallet" }
 gocardless = { long_lived_token = true, payment_method = "bank_debit" }
 billwerk = { long_lived_token = false, payment_method = "card" }
+iugu = { long_lived_token = false, payment_method = "card" }
 globalpay = { long_lived_token = false, payment_method = "card", flow = "mandates" }
 dwolla = { long_lived_token = true, payment_method = "bank_debit" }
 finix= { long_lived_token = false, payment_method = "card,wallet" }
@@ -825,6 +828,18 @@ we_chat_pay = { country = "GB",currency = "GBP,CNY" }
 
 [pm_filters.itaubank]
 pix = { country = "BR", currency = "BRL" }
+
+[pm_filters.iugu]
+credit = { country = "BR", currency = "BRL" }
+debit = { country = "BR", currency = "BRL" }
+pix = { country = "BR", currency = "BRL" }
+boleto = { country = "BR", currency = "BRL" }
+
+[pm_filters.asaas]
+credit = { country = "BR", currency = "BRL" }
+debit = { country = "BR", currency = "BRL" }
+pix = { country = "BR", currency = "BRL" }
+boleto = { country = "BR", currency = "BRL" }
 
 [pm_filters.nexinets]
 credit = { country = "DE",currency = "EUR" }

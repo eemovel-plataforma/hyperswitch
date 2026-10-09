@@ -69,6 +69,7 @@ pub enum Connector {
     Airwallex,
     Amazonpay,
     Archipel,
+    Asaas,
     Authorizedotnet,
     Bambora,
     Bamboraapac,
@@ -130,6 +131,7 @@ pub enum Connector {
     Iatapay,
     Imerchantsolutions,
     Itaubank,
+    Iugu,
     Jpmorgan,
     Juspaythreedsserver,
     Klarna,
@@ -312,6 +314,7 @@ impl Connector {
             | Self::DummyConnector7 => false,
             Self::Aci
             // Add Separate authentication support for connectors
+            | Self::Asaas
             | Self::AbsaSanlam
 			| Self::Authipay
             | Self::Affirm
@@ -367,6 +370,7 @@ impl Connector {
             | Self::Iatapay
 			| Self::Inespay
             | Self::Itaubank
+            | Self::Iugu
             | Self::Jpmorgan
             | Self::Juspaythreedsserver
             | Self::Klarna
