@@ -1,6 +1,6 @@
 pub mod transformers;
 
-use error_stack::{report, ResultExt};
+use error_stack::ResultExt;
 use hyperswitch_masking::{Mask, PeekInterface, Secret};
 
 use common_utils::{
